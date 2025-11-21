@@ -16,6 +16,8 @@ A Tinder-style web app for quickly reviewing and rating QA images. Swipe right f
 ## Installation
 
 ```bash
+git clone https://github.com/jinghangli98/QA_app
+cd QA_app
 pip install flask
 ```
 
