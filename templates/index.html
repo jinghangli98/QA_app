@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Image Review</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 98vw;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .stat-good .stat-value { color: #4ade80; }
+        .stat-bad .stat-value { color: #f87171; }
+
+        .card-container {
+            position: relative;
+            width: 100%;
+            height: 85vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            max-width: 95vw;
+            background: #2a2a4a;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            cursor: grab;
+            transition: transform 0.3s ease;
+            user-select: none;
+        }
+
+        .card:active {
+            cursor: grabbing;
+        }
+
+        .card.swiping-left {
+            background: linear-gradient(135deg, #2a2a4a 0%, #4a2a2a 100%);
+        }
+
+        .card.swiping-right {
+            background: linear-gradient(135deg, #2a2a4a 0%, #2a4a2a 100%);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 80vh;
+            object-fit: contain;
+            background: #1a1a2e;
+        }
+
+        .card-info {
+            padding: 15px;
+        }
+
+        .card-path {
+            font-size: 0.75rem;
+            color: #888;
+            word-break: break-all;
+        }
+
+        .swipe-indicator {
+            position: absolute;
+            top: 20px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .swipe-indicator.left {
+            left: 20px;
+            background: #f87171;
+            transform: rotate(-15deg);
+        }
+
+        .swipe-indicator.right {
+            right: 20px;
+            background: #4ade80;
+            transform: rotate(15deg);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-bad {
+            background: #f87171;
+            box-shadow: 0 4px 15px rgba(248, 113, 113, 0.4);
+        }
+
+        .btn-undo {
+            background: #fbbf24;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+            width: 50px;
+            height: 50px;
+            font-size: 1rem;
+        }
+
+        .btn-good {
+            background: #4ade80;
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+        }
+
+        .btn-export {
+            background: #60a5fa;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .btn-export:hover {
+            background: #3b82f6;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .keyboard-hint kbd {
+            background: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 0 4px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #60a5fa);
+            transition: width 0.3s ease;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+
+        .empty-state h2 {
+            margin-bottom: 10px;
+        }
+
+        .complete-state {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .complete-state h2 {
+            color: #4ade80;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QA Image Review</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </header>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="total">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat stat-good">
+                <div class="stat-value" id="good">0</div>
+                <div class="stat-label">Good</div>
+            </div>
+            <div class="stat stat-bad">
+                <div class="stat-value" id="bad">0</div>
+                <div class="stat-label">Bad</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="remaining">0</div>
+                <div class="stat-label">Remaining</div>
+            </div>
+        </div>
+
+        <div class="card-container" id="cardContainer">
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <h2>No images found</h2>
+                <p>Check the IMAGE_PATTERN in app.py</p>
+            </div>
+            <div class="complete-state" id="completeState" style="display: none;">
+                <h2>All Done!</h2>
+                <p>You've reviewed all images</p>
+                <button class="btn-export" onclick="exportCSV()">Download Results CSV</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-bad" onclick="rate('bad')" title="Bad (Left Arrow)">✗</button>
+            <button class="btn btn-undo" onclick="undo()" title="Undo (Z)">↩</button>
+            <button class="btn btn-good" onclick="rate('good')" title="Good (Right Arrow)">✓</button>
+        </div>
+
+        <div class="keyboard-hint">
+            <kbd>←</kbd> Bad &nbsp;&nbsp;
+            <kbd>→</kbd> Good &nbsp;&nbsp;
+            <kbd>Z</kbd> Undo
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn-export" onclick="exportCSV()">Export to CSV</button>
+        </div>
+    </div>
+
+    <script>
+        let images = [];
+        let currentIndex = 0;
+        let reviewedImages = new Set();
+        let history = [];
+
+        // Touch/drag handling
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        async function init() {
+            const response = await fetch('/api/images');
+            const data = await response.json();
+            images = data.images;
+
+            if (images.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            updateStats();
+            showCard();
+        }
+
+        async function updateStats() {
+            const response = await fetch('/api/stats');
+            const stats = await response.json();
+
+            document.getElementById('total').textContent = stats.total;
+            document.getElementById('good').textContent = stats.good;
+            document.getElementById('bad').textContent = stats.bad;
+            document.getElementById('remaining').textContent = stats.remaining;
+
+            const progress = (stats.reviewed / stats.total) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+
+            reviewedImages = new Set();
+            // Update reviewed set based on server data
+        }
+
+        function showCard() {
+            const container = document.getElementById('cardContainer');
+
+            // Remove existing cards
+            const existingCards = container.querySelectorAll('.card');
+            existingCards.forEach(card => card.remove());
+
+            // Skip already reviewed images
+            while (currentIndex < images.length && reviewedImages.has(images[currentIndex])) {
+                currentIndex++;
+            }
+
+            if (currentIndex >= images.length) {
+                document.getElementById('completeState').style.display = 'block';
+                return;
+            }
+
+            const imagePath = images[currentIndex];
+            const card = createCard(imagePath);
+            container.appendChild(card);
+
+            setupDragHandlers(card);
+        }
+
+        function createCard(imagePath) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="swipe-indicator left">BAD</div>
+                <div class="swipe-indicator right">GOOD</div>
+                <img class="card-image" src="/api/image${imagePath}" alt="QA Image">
+                <div class="card-info">
+                    <div class="card-path">${imagePath}</div>
+                </div>
+            `;
+            return card;
+        }
+
+        function setupDragHandlers(card) {
+            card.addEventListener('mousedown', dragStart);
+            card.addEventListener('touchstart', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchend', dragEnd);
+        }
+
+        function dragStart(e) {
+            isDragging = true;
+            startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+            const diff = currentX - startX;
+
+            const card = document.querySelector('.card');
+            if (!card) return;
+
+            card.style.transform = `translateX(${diff}px) rotate(${diff * 0.05}deg)`;
+
+            // Update indicators
+            const leftIndicator = card.querySelector('.swipe-indicator.left');
+            const rightIndicator = card.querySelector('.swipe-indicator.right');
+
+            if (diff < -50) {
+                leftIndicator.style.opacity = Math.min(1, Math.abs(diff) / 150);
+                rightIndicator.style.opacity = 0;
+                card.classList.add('swiping-left');
+                card.classList.remove('swiping-right');
+            } else if (diff > 50) {
+                rightIndicator.style.opacity = Math.min(1, diff / 150);
+                leftIndicator.style.opacity = 0;
+                card.classList.add('swiping-right');
+                card.classList.remove('swiping-left');
+            } else {
+                leftIndicator.style.opacity = 0;
+                rightIndicator.style.opacity = 0;
+                card.classList.remove('swiping-left', 'swiping-right');
+            }
+        }
+
+        function dragEnd(e) {
+            if (!isDragging) return;
+            isDragging = false;
+
+            const diff = currentX - startX;
+            const card = document.querySelector('.card');
+
+            if (Math.abs(diff) > 100) {
+                // Swipe threshold met
+                const rating = diff > 0 ? 'good' : 'bad';
+                animateSwipe(card, diff > 0 ? 1 : -1, () => rate(rating));
+            } else {
+                // Reset card position
+                if (card) {
+                    card.style.transform = '';
+                    card.classList.remove('swiping-left', 'swiping-right');
+                    const indicators = card.querySelectorAll('.swipe-indicator');
+                    indicators.forEach(i => i.style.opacity = 0);
+                }
+            }
+        }
+
+        function animateSwipe(card, direction, callback) {
+            if (!card) {
+                callback();
+                return;
+            }
+
+            card.style.transition = 'transform 0.3s ease';
+            card.style.transform = `translateX(${direction * 1000}px) rotate(${direction * 30}deg)`;
+
+            setTimeout(() => {
+                card.remove();
+                callback();
+            }, 300);
+        }
+
+        async function rate(rating) {
+            if (currentIndex >= images.length) return;
+
+            const imagePath = images[currentIndex];
+
+            history.push({ index: currentIndex, image: imagePath });
+
+            await fetch('/api/rate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imagePath, rating: rating })
+            });
+
+            reviewedImages.add(imagePath);
+            currentIndex++;
+
+            updateStats();
+            showCard();
+        }
+
+        async function undo() {
+            if (history.length === 0) return;
+
+            const last = history.pop();
+
+            await fetch('/api/undo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: last.image })
+            });
+
+            reviewedImages.delete(last.image);
+            currentIndex = last.index;
+
+            document.getElementById('completeState').style.display = 'none';
+
+            updateStats();
+            showCard();
+        }
+
+        function exportCSV() {
+            window.location.href = '/api/export';
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                rate('bad');
+            } else if (e.key === 'ArrowRight') {
+                rate('good');
+            } else if (e.key === 'z' || e.key === 'Z') {
+                undo();
+            }
+        });
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
