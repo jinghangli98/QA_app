@@ -3,518 +3,725 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QA Image Review</title>
+    <title>NeuroQA · Image Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            color: white;
-            overflow-x: hidden;
+        :root {
+            --bg:           #0c0c10;
+            --surface:      #141419;
+            --surface-2:    #1c1c24;
+            --surface-3:    #25252f;
+            --border:       rgba(255,255,255,0.07);
+            --border-hi:    rgba(255,255,255,0.13);
+            --text:         #f1f5f9;
+            --text-2:       #8892a4;
+            --text-3:       #454f5e;
+            --good:         #22c55e;
+            --good-dim:     rgba(34,197,94,0.1);
+            --good-border:  rgba(34,197,94,0.22);
+            --bad:          #f43f5e;
+            --bad-dim:      rgba(244,63,94,0.1);
+            --bad-border:   rgba(244,63,94,0.22);
+            --amber:        #f59e0b;
+            --amber-dim:    rgba(245,158,11,0.1);
+            --amber-border: rgba(245,158,11,0.22);
+            --indigo:       #818cf8;
+            --indigo-dim:   rgba(129,140,248,0.1);
+            --indigo-border:rgba(129,140,248,0.22);
+            --r-sm: 6px;
+            --r:    10px;
+            --r-lg: 14px;
+            --r-xl: 20px;
+            --t:    150ms ease;
         }
 
-        /* ── Login modal ─────────────────────────────────────── */
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+
+        /* ─── Scrollbar ─────────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+
+        /* ─── Login modal ───────────────────────────────────────────── */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: flex; align-items: center; justify-content: center;
             z-index: 1000;
+            animation: fadeIn 200ms ease;
         }
         .modal-overlay.hidden { display: none; }
 
-        .modal {
-            background: #2a2a4a;
-            border-radius: 16px;
-            padding: 40px;
-            width: 360px;
-            max-width: 90vw;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-        .modal h2 { font-size: 1.6rem; margin-bottom: 8px; }
-        .modal p  { color: #888; margin-bottom: 24px; font-size: 0.9rem; }
-        .modal input {
-            width: 100%; padding: 12px 16px;
-            border-radius: 8px; border: 2px solid #444;
-            background: #1a1a2e; color: white; font-size: 1rem;
-            margin-bottom: 16px; outline: none; transition: border-color 0.2s;
-        }
-        .modal input:focus { border-color: #60a5fa; }
-        .modal .btn-start {
-            width: 100%; padding: 12px;
-            background: linear-gradient(90deg, #4ade80, #60a5fa);
-            border: none; border-radius: 8px;
-            color: #1a1a2e; font-size: 1rem; font-weight: bold;
-            cursor: pointer; transition: opacity 0.2s;
-        }
-        .modal .btn-start:hover { opacity: 0.9; }
-        .modal-error { color: #f87171; font-size: 0.85rem; margin-top: 8px; display: none; }
+        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ── Confirm overlay (for clear) ─────────────────────── */
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            border-radius: var(--r-xl);
+            padding: 36px;
+            width: 380px;
+            max-width: calc(100vw - 32px);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset,
+                        0 40px 80px rgba(0,0,0,0.7);
+            animation: slideUp 250ms ease;
+        }
+
+        .modal-mark {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px;
+            background: var(--indigo-dim);
+            border: 1px solid var(--indigo-border);
+            border-radius: var(--r);
+            font-size: 13px; font-weight: 700; color: var(--indigo);
+            letter-spacing: -0.04em;
+            margin-bottom: 22px;
+        }
+
+        .modal h2 {
+            font-size: 1.35rem; font-weight: 600;
+            letter-spacing: -0.03em; margin-bottom: 6px;
+        }
+        .modal p {
+            color: var(--text-2); font-size: 0.875rem;
+            line-height: 1.55; margin-bottom: 26px;
+        }
+
+        label.field-label {
+            display: block; font-size: 0.76rem; font-weight: 500;
+            color: var(--text-2); margin-bottom: 7px; letter-spacing: 0.01em;
+        }
+        .modal input[type="text"] {
+            width: 100%; padding: 9px 13px;
+            border-radius: var(--r);
+            border: 1px solid var(--border-hi);
+            background: var(--surface-2);
+            color: var(--text); font-size: 0.9rem; font-family: inherit;
+            outline: none; margin-bottom: 14px;
+            transition: border-color var(--t), box-shadow var(--t);
+        }
+        .modal input[type="text"]:focus {
+            border-color: var(--indigo);
+            box-shadow: 0 0 0 3px rgba(129,140,248,0.14);
+        }
+        .modal input[type="text"]::placeholder { color: var(--text-3); }
+
+        .btn-primary {
+            width: 100%; padding: 10px;
+            background: var(--text); color: var(--bg);
+            border: none; border-radius: var(--r);
+            font-size: 0.9rem; font-weight: 600; font-family: inherit;
+            cursor: pointer; letter-spacing: -0.01em;
+            transition: opacity var(--t), transform 100ms ease;
+        }
+        .btn-primary:hover  { opacity: 0.88; }
+        .btn-primary:active { transform: scale(0.985); }
+
+        .modal-error {
+            font-size: 0.78rem; color: var(--bad);
+            margin-top: 9px; display: none;
+        }
+
+        /* ─── Confirm dialog ────────────────────────────────────────── */
         .confirm-overlay {
             position: fixed; inset: 0;
-            background: rgba(0,0,0,0.75);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             display: none; align-items: center; justify-content: center;
             z-index: 900;
         }
         .confirm-overlay.show { display: flex; }
+
         .confirm-box {
-            background: #2a2a4a; border-radius: 16px;
-            padding: 32px; width: 340px; max-width: 90vw;
-            text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            border-radius: var(--r-lg);
+            padding: 26px 28px;
+            width: 340px; max-width: calc(100vw - 32px);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+            animation: slideUp 200ms ease;
         }
-        .confirm-box h3 { font-size: 1.3rem; margin-bottom: 10px; color: #f87171; }
-        .confirm-box p  { color: #aaa; margin-bottom: 24px; font-size: 0.9rem; }
-        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
-        .btn-confirm-yes {
-            padding: 10px 24px; background: #f87171; border: none;
-            border-radius: 8px; color: white; font-size: 0.95rem;
-            font-weight: bold; cursor: pointer; transition: opacity 0.2s;
+        .confirm-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px;
+            background: var(--bad-dim); border: 1px solid var(--bad-border);
+            border-radius: var(--r-sm); font-size: 14px;
+            margin-bottom: 14px;
         }
-        .btn-confirm-yes:hover { opacity: 0.85; }
-        .btn-confirm-no {
-            padding: 10px 24px; background: #444; border: none;
-            border-radius: 8px; color: white; font-size: 0.95rem;
-            cursor: pointer; transition: background 0.2s;
+        .confirm-box h3 {
+            font-size: 0.95rem; font-weight: 600;
+            letter-spacing: -0.02em; margin-bottom: 6px;
         }
-        .btn-confirm-no:hover { background: #555; }
+        .confirm-box p {
+            color: var(--text-2); font-size: 0.83rem;
+            line-height: 1.5; margin-bottom: 20px;
+        }
+        .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-        /* ── Main layout ─────────────────────────────────────── */
-        .container { max-width: 98vw; margin: 0 auto; padding: 20px; }
+        .btn-ghost {
+            padding: 7px 15px;
+            background: transparent;
+            border: 1px solid var(--border-hi);
+            border-radius: var(--r-sm);
+            color: var(--text-2); font-size: 0.83rem; font-family: inherit;
+            cursor: pointer; transition: all var(--t);
+        }
+        .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
 
-        header { text-align: center; margin-bottom: 20px; }
-        h1 { font-size: 2rem; margin-bottom: 6px; }
+        .btn-destructive {
+            padding: 7px 15px;
+            background: var(--bad-dim);
+            border: 1px solid var(--bad-border);
+            border-radius: var(--r-sm);
+            color: var(--bad); font-size: 0.83rem; font-weight: 500; font-family: inherit;
+            cursor: pointer; transition: all var(--t);
+        }
+        .btn-destructive:hover { background: rgba(244,63,94,0.18); }
+
+        /* ─── Toast ─────────────────────────────────────────────────── */
+        .toast {
+            position: fixed; bottom: 18px; left: 50%;
+            transform: translateX(-50%) translateY(6px);
+            background: var(--surface-2);
+            border: 1px solid var(--border-hi);
+            border-radius: var(--r);
+            padding: 7px 16px;
+            font-size: 0.78rem; color: var(--text-2);
+            white-space: nowrap;
+            opacity: 0; pointer-events: none;
+            transition: opacity 250ms ease, transform 250ms ease;
+            z-index: 500;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ─── App shell ─────────────────────────────────────────────── */
+        .app {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            height: 100vh;
+            padding: 14px 18px 10px;
+            gap: 0;
+        }
+
+        /* ─── Top bar ───────────────────────────────────────────────── */
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 12px;
+        }
+        .brand {
+            display: flex; align-items: center; gap: 9px;
+        }
+        .brand-icon {
+            width: 26px; height: 26px;
+            background: var(--indigo-dim);
+            border: 1px solid var(--indigo-border);
+            border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; color: var(--indigo);
+            letter-spacing: -0.04em; flex-shrink: 0;
+        }
+        .brand-name {
+            font-size: 0.88rem; font-weight: 600;
+            letter-spacing: -0.025em; color: var(--text);
+        }
 
         .user-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: rgba(96,165,250,0.15);
-            border: 1px solid rgba(96,165,250,0.4);
-            border-radius: 20px; padding: 4px 14px;
-            font-size: 0.85rem; color: #93c5fd;
-            margin-bottom: 12px; cursor: pointer; transition: background 0.2s;
+            display: none;
+            align-items: center; gap: 6px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 4px 12px 4px 7px;
+            font-size: 0.76rem; color: var(--text-2);
+            cursor: pointer; transition: all var(--t);
         }
-        .user-badge:hover { background: rgba(96,165,250,0.25); }
-        .user-badge span  { font-weight: bold; color: #60a5fa; }
+        .user-badge:hover { border-color: var(--border-hi); color: var(--text); }
+        .user-avatar {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--surface-3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; color: var(--text-3);
+        }
+        .user-badge .uname { font-weight: 500; color: var(--text); }
+        .user-badge .switch { color: var(--text-3); }
 
-        /* ── Progress bar (interactive) ─────────────────────── */
-        .progress-wrapper {
-            position: relative;
-            width: 100%;
-            margin-bottom: 6px;
-            cursor: pointer;
+        /* ─── Progress row ──────────────────────────────────────────── */
+        .progress-section { padding-bottom: 11px; }
+
+        .progress-meta {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 7px;
         }
-        .progress-bar {
-            width: 100%; height: 10px;
-            background: #333; border-radius: 5px;
-            overflow: hidden; pointer-events: none;
+
+        .stats-chips {
+            display: flex; align-items: center; gap: 14px;
+        }
+        .chip {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.76rem;
+        }
+        .chip-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+        }
+        .chip-dot-total  { background: var(--text-3); }
+        .chip-dot-good   { background: var(--good); }
+        .chip-dot-bad    { background: var(--bad); }
+        .chip-dot-remain { background: var(--indigo); }
+        .chip-val  { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+        .chip-lbl  { color: var(--text-3); }
+
+        .progress-label-right {
+            font-size: 0.74rem; color: var(--text-3);
+            font-variant-numeric: tabular-nums;
+        }
+        .progress-label-right strong { color: var(--text-2); font-weight: 500; }
+
+        /* Progress track */
+        .progress-wrapper {
+            position: relative; height: 3px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px; cursor: pointer;
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #4ade80, #60a5fa);
-            transition: width 0.2s ease;
+            background: rgba(255,255,255,0.25);
+            border-radius: 2px;
+            transition: width 200ms ease;
         }
-        /* Tick marks for each rated image */
         .progress-ticks {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 10px;
-            pointer-events: none;
+            position: absolute; inset: 0; pointer-events: none;
         }
         .progress-tick {
-            position: absolute;
-            top: 0; width: 2px; height: 10px;
-            opacity: 0.7;
+            position: absolute; top: 0; width: 1px; height: 100%; opacity: 0.55;
         }
-        .tick-good { background: #4ade80; }
-        .tick-bad  { background: #f87171; }
+        .tick-good { background: var(--good); }
+        .tick-bad  { background: var(--bad); }
 
-        /* Hover cursor (disappears when mouse leaves) */
-        .progress-cursor {
-            position: absolute; top: -6px;
-            width: 2px; height: 22px;
-            background: white; border-radius: 2px;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.15s;
-        }
-        .progress-wrapper:hover .progress-cursor { opacity: 0.7; }
-
-        /* Current-position marker — always visible */
+        /* Current-position marker */
         .progress-position {
-            position: absolute; top: 50%;
-            transform: translate(-50%, -50%) rotate(45deg);
-            width: 9px; height: 9px;
-            background: white;
-            border-radius: 2px;
+            position: absolute; top: 50%; left: 0;
+            transform: translate(-50%, -50%);
+            width: 3px; height: 11px;
+            background: white; border-radius: 2px;
             pointer-events: none;
-            transition: left 0.2s ease;
-            box-shadow: 0 0 6px rgba(255,255,255,0.6);
+            transition: left 200ms ease;
             z-index: 2;
+            box-shadow: 0 0 4px rgba(255,255,255,0.5);
         }
 
-        /* Tooltip */
+        /* Hover cursor */
+        .progress-cursor {
+            position: absolute; top: -4px;
+            width: 1px; height: 11px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 1px;
+            opacity: 0; pointer-events: none;
+        }
+        .progress-wrapper:hover .progress-cursor { opacity: 1; }
+
         .progress-tooltip {
             position: absolute; top: -30px;
             transform: translateX(-50%);
-            background: #1a1a2e; border: 1px solid #444;
-            border-radius: 6px; padding: 3px 8px;
-            font-size: 0.75rem; color: #ccc;
+            background: var(--surface-3);
+            border: 1px solid var(--border-hi);
+            border-radius: var(--r-sm);
+            padding: 3px 8px;
+            font-size: 0.7rem; color: var(--text-2);
             white-space: nowrap; pointer-events: none;
-            opacity: 0; transition: opacity 0.15s;
+            opacity: 0; transition: opacity var(--t);
         }
         .progress-wrapper:hover .progress-tooltip { opacity: 1; }
 
-        .progress-label {
-            text-align: right; font-size: 0.75rem;
-            color: #666; margin-bottom: 16px;
-        }
-
-        /* ── Stats ───────────────────────────────────────────── */
-        .stats {
-            display: flex; justify-content: center;
-            gap: 30px; flex-wrap: wrap; margin-bottom: 20px;
-        }
-        .stat { text-align: center; }
-        .stat-value { font-size: 1.8rem; font-weight: bold; }
-        .stat-label { font-size: 0.8rem; color: #888; text-transform: uppercase; }
-        .stat-good .stat-value { color: #4ade80; }
-        .stat-bad  .stat-value { color: #f87171; }
-
-        /* ── Card + side controls layout ─────────────────────── */
+        /* ─── Review row ────────────────────────────────────────────── */
         .review-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-            margin-bottom: 16px;
+            display: flex; align-items: center;
+            gap: 10px; min-height: 0;
         }
 
-        .card-container {
-            position: relative;
-            flex: 1;
-            min-width: 0;
-            height: 85vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .card {
-            position: absolute; width: 100%; max-width: 100%;
-            background: #2a2a4a; border-radius: 16px; overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            cursor: grab; transition: transform 0.3s ease; user-select: none;
-        }
-        .card:active { cursor: grabbing; }
-        .card.swiping-left  { background: linear-gradient(135deg, #2a2a4a 0%, #4a2a2a 100%); }
-        .card.swiping-right { background: linear-gradient(135deg, #2a2a4a 0%, #2a4a2a 100%); }
-        .card-image { width: 100%; height: 80vh; object-fit: contain; background: #1a1a2e; }
-        .card-info  { padding: 10px 14px; }
-        .card-path  { font-size: 0.72rem; color: #666; word-break: break-all; }
-
-        .swipe-indicator {
-            position: absolute; top: 20px;
-            padding: 10px 20px; border-radius: 8px;
-            font-weight: bold; font-size: 1.5rem;
-            opacity: 0; transition: opacity 0.2s;
-        }
-        .swipe-indicator.left  { left: 20px;  background: #f87171; transform: rotate(-15deg); }
-        .swipe-indicator.right { right: 20px; background: #4ade80; transform: rotate(15deg);  }
-
-        /* ── Side action pills ───────────────────────────────── */
-        .side-actions {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+        /* ─── Side columns ──────────────────────────────────────────── */
+        .side-col {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 7px;
             flex-shrink: 0;
         }
 
-        /* Main rate pill */
-        .rate-pill {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 52px;
-            padding: 18px 0;
-            border-radius: 30px;
-            border: none;
-            cursor: pointer;
-            font-size: 1.4rem;
-            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-            outline: none;
+        /* Primary action button */
+        .action-btn {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 5px;
+            width: 50px; padding: 18px 0;
+            border-radius: var(--r-lg);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer; font-family: inherit;
+            transition: all var(--t); outline: none;
         }
-        .rate-pill:hover  { transform: scale(1.07); }
-        .rate-pill:active { transform: scale(0.94); }
-        .rate-pill .pill-label {
-            font-size: 0.6rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            opacity: 0.75;
+        .action-icon {
+            font-size: 1.15rem; line-height: 1;
+            transition: transform var(--t);
+        }
+        .action-label {
+            font-size: 0.58rem; font-weight: 600;
+            letter-spacing: 0.07em; text-transform: uppercase;
+            opacity: 0.5;
         }
 
-        .pill-bad {
-            background: rgba(248,113,113,0.12);
-            color: #f87171;
-            border: 1px solid rgba(248,113,113,0.35);
-            box-shadow: 0 4px 20px rgba(248,113,113,0.15);
+        .action-bad  { color: var(--bad); }
+        .action-bad:hover {
+            background: var(--bad-dim); border-color: var(--bad-border);
+            box-shadow: 0 0 24px rgba(244,63,94,0.1);
         }
-        .pill-bad:hover {
-            background: rgba(248,113,113,0.22);
-            box-shadow: 0 6px 24px rgba(248,113,113,0.3);
-        }
+        .action-bad:hover  .action-icon { transform: scale(1.18); }
+        .action-bad:active  { transform: scale(0.95); }
 
-        .pill-good {
-            background: rgba(74,222,128,0.12);
-            color: #4ade80;
-            border: 1px solid rgba(74,222,128,0.35);
-            box-shadow: 0 4px 20px rgba(74,222,128,0.15);
+        .action-good { color: var(--good); }
+        .action-good:hover {
+            background: var(--good-dim); border-color: var(--good-border);
+            box-shadow: 0 0 24px rgba(34,197,94,0.1);
         }
-        .pill-good:hover {
-            background: rgba(74,222,128,0.22);
-            box-shadow: 0 6px 24px rgba(74,222,128,0.3);
-        }
+        .action-good:hover .action-icon { transform: scale(1.18); }
+        .action-good:active { transform: scale(0.95); }
 
-        /* Undo micro-button */
-        .btn-undo-micro {
+        /* Icon-only secondary buttons */
+        .icon-btn {
             width: 36px; height: 36px;
-            border-radius: 50%;
-            border: 1px solid rgba(251,191,36,0.3);
-            background: rgba(251,191,36,0.08);
-            color: #fbbf24;
-            font-size: 1rem;
+            border-radius: var(--r);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-3);
+            font-size: 0.9rem;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: background 0.15s, transform 0.15s;
-            outline: none;
+            font-family: inherit;
+            transition: all var(--t); outline: none;
+            position: relative;
         }
-        .btn-undo-micro:hover  { background: rgba(251,191,36,0.18); transform: scale(1.1); }
-        .btn-undo-micro:active { transform: scale(0.92); }
+        .icon-btn:hover {
+            background: var(--surface-2);
+            border-color: var(--border-hi);
+            color: var(--text-2);
+        }
+        .icon-btn:active { transform: scale(0.91); }
 
-        /* ── Secondary side pills (Export / Clear) ──────────── */
-        .side-pill {
-            display: flex;
+        .icon-btn-amber:hover {
+            color: var(--amber); border-color: var(--amber-border);
+            background: var(--amber-dim);
+        }
+        .icon-btn-indigo:hover {
+            color: var(--indigo); border-color: var(--indigo-border);
+            background: var(--indigo-dim);
+        }
+        .icon-btn-red:hover {
+            color: var(--bad); border-color: var(--bad-border);
+            background: var(--bad-dim);
+        }
+
+        /* Tooltip for icon buttons */
+        .icon-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: calc(100% + 8px);
+            top: 50%; transform: translateY(-50%);
+            background: var(--surface-3);
+            border: 1px solid var(--border-hi);
+            border-radius: var(--r-sm);
+            padding: 4px 9px;
+            font-size: 0.7rem; color: var(--text-2);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+        }
+        /* Right-side tooltips go left */
+        .side-col:last-child .icon-btn[title]:hover::after {
+            left: auto; right: calc(100% + 8px);
+        }
+
+        /* ─── Card area ─────────────────────────────────────────────── */
+        .card-container {
+            flex: 1; min-width: 0; height: 100%;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Dynamic cards (added by JS) */
+        .card {
+            position: absolute; inset: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            cursor: grab; user-select: none;
+            transition: transform 300ms ease, border-color 200ms ease, background 200ms ease;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.25), 0 0 0 0 transparent;
+        }
+        .card:active { cursor: grabbing; }
+        .card.swiping-left {
+            border-color: var(--bad-border);
+            background: linear-gradient(120deg, var(--surface) 55%, rgba(244,63,94,0.07));
+        }
+        .card.swiping-right {
+            border-color: var(--good-border);
+            background: linear-gradient(120deg, var(--surface) 55%, rgba(34,197,94,0.07));
+        }
+
+        .card-image {
+            width: 100%;
+            height: calc(100% - 38px);
+            display: block;
+            object-fit: contain;
+            background: #09090d;
+        }
+        .card-footer {
+            height: 38px;
+            display: flex; align-items: center;
+            padding: 0 14px;
+            border-top: 1px solid var(--border);
+            gap: 8px;
+        }
+        .card-path {
+            font-size: 0.68rem; color: var(--text-3);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            flex: 1;
+        }
+
+        /* Swipe stamp overlays */
+        .swipe-indicator {
+            position: absolute; top: 14px;
+            padding: 4px 10px;
+            border-radius: var(--r-sm);
+            font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            opacity: 0; transition: opacity 180ms ease;
+            pointer-events: none;
+        }
+        .swipe-indicator.left {
+            left: 14px;
+            background: var(--bad-dim); border: 1px solid var(--bad-border);
+            color: var(--bad);
+            transform: rotate(-8deg);
+        }
+        .swipe-indicator.right {
+            right: 14px;
+            background: var(--good-dim); border: 1px solid var(--good-border);
+            color: var(--good);
+            transform: rotate(8deg);
+        }
+
+        /* ─── State cards (empty / complete) ────────────────────────── */
+        .state-card {
+            position: absolute; inset: 0;
+            display: none; /* JS toggles to flex */
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            width: 44px;
-            padding: 12px 0;
-            border-radius: 24px;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: transform 0.15s, opacity 0.15s;
-            outline: none;
-            opacity: 0.7;
+            align-items: center; justify-content: center;
+            gap: 10px; padding: 40px;
+            text-align: center;
         }
-        .side-pill:hover  { transform: scale(1.08); opacity: 1; }
-        .side-pill:active { transform: scale(0.93); }
-        .side-pill .pill-label {
-            font-size: 0.55rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+        .state-icon {
+            font-size: 1.8rem; margin-bottom: 4px;
+            filter: grayscale(0.3);
         }
-
-        .pill-export {
-            background: rgba(96,165,250,0.10);
-            color: #60a5fa;
-            border: 1px solid rgba(96,165,250,0.3);
+        .state-title {
+            font-size: 1rem; font-weight: 600; letter-spacing: -0.02em;
         }
-        .pill-export:hover { background: rgba(96,165,250,0.2); }
-
-        .pill-clear {
-            background: rgba(248,113,113,0.08);
-            color: #f87171;
-            border: 1px solid rgba(248,113,113,0.25);
+        .state-sub {
+            font-size: 0.83rem; color: var(--text-2); line-height: 1.5;
         }
-        .pill-clear:hover { background: rgba(248,113,113,0.18); }
-
-        /* ── Bottom action bar ───────────────────────────────── */
-        .btn-export {
-            background: rgba(96,165,250,0.12); color: #60a5fa;
-            padding: 10px 22px; border: 1px solid rgba(96,165,250,0.3);
-            border-radius: 8px; cursor: pointer; font-size: 0.9rem;
-            transition: background 0.2s;
+        .btn-sm {
+            margin-top: 10px; padding: 8px 20px;
+            background: var(--surface-2);
+            border: 1px solid var(--border-hi);
+            border-radius: var(--r);
+            color: var(--text); font-size: 0.83rem;
+            font-weight: 500; font-family: inherit;
+            cursor: pointer; transition: all var(--t);
         }
-        .btn-export:hover { background: rgba(96,165,250,0.22); }
+        .btn-sm:hover { background: var(--surface-3); }
 
-        .btn-clear {
-            background: transparent; color: #f87171;
-            padding: 8px 18px; border: 1px solid rgba(248,113,113,0.25);
-            border-radius: 8px; cursor: pointer; font-size: 0.85rem;
-            transition: background 0.2s;
+        /* ─── Keyboard hint ─────────────────────────────────────────── */
+        .kbd-hint {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; flex-wrap: wrap;
+            padding-top: 8px;
         }
-        .btn-clear:hover { background: rgba(248,113,113,0.08); }
-
-        .keyboard-hint { text-align: center; color: #555; font-size: 0.8rem; margin-top: 6px; }
-        .keyboard-hint kbd { background: #262640; padding: 3px 7px; border-radius: 4px; margin: 0 3px; font-size: 0.75rem; }
-
-        .action-bar { text-align: center; margin-top: 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-
-        .empty-state    { text-align: center; padding: 60px; color: #888; }
-        .empty-state h2 { margin-bottom: 10px; }
-        .complete-state    { text-align: center; padding: 60px; }
-        .complete-state h2 { color: #4ade80; margin-bottom: 20px; }
-
-        /* jump-to toast */
-        .jump-toast {
-            position: fixed; bottom: 24px; left: 50%;
-            transform: translateX(-50%);
-            background: #2a2a4a; border: 1px solid #444;
-            border-radius: 10px; padding: 8px 20px;
-            font-size: 0.85rem; color: #ccc;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s;
-            z-index: 500;
+        .kbd-item {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.7rem; color: var(--text-3);
         }
-        .jump-toast.show { opacity: 1; }
+        kbd {
+            background: var(--surface-2);
+            border: 1px solid var(--border-hi);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.68rem; font-family: inherit;
+            color: var(--text-2); min-width: 22px; text-align: center;
+        }
     </style>
 </head>
 <body>
 
-<!-- ── Login modal ───────────────────────────────────────── -->
+<!-- ── Login modal ──────────────────────────────────────────── -->
 <div class="modal-overlay" id="loginModal">
     <div class="modal">
-        <h2>👤 Who are you?</h2>
-        <p>Enter your name so your ratings are saved separately.</p>
-        <input type="text" id="usernameInput" placeholder="Your name…" maxlength="60" autocomplete="off">
-        <button class="btn-start" onclick="startSession()">Start Rating</button>
-        <div class="modal-error" id="loginError">Please enter your name.</div>
+        <div class="modal-mark">QA</div>
+        <h2>Sign in to review</h2>
+        <p>Enter your name to track your ratings separately from other reviewers.</p>
+        <label class="field-label" for="usernameInput">Your name</label>
+        <input type="text" id="usernameInput" placeholder="e.g. Dr. Smith" maxlength="60" autocomplete="off">
+        <button class="btn-primary" onclick="startSession()">Continue →</button>
+        <div class="modal-error" id="loginError">Please enter your name to continue.</div>
     </div>
 </div>
 
-<!-- ── Confirm clear modal ───────────────────────────────── -->
+<!-- ── Confirm clear ────────────────────────────────────────── -->
 <div class="confirm-overlay" id="confirmOverlay">
     <div class="confirm-box">
-        <h3>⚠️ Clear All Ratings?</h3>
-        <p>This will permanently delete all your ratings and cannot be undone.</p>
+        <div class="confirm-badge">⚠</div>
+        <h3>Clear all ratings?</h3>
+        <p>This will permanently delete all of your saved ratings and cannot be undone.</p>
         <div class="confirm-actions">
-            <button class="btn-confirm-yes" onclick="confirmClear()">Yes, clear them</button>
-            <button class="btn-confirm-no"  onclick="cancelClear()">Cancel</button>
+            <button class="btn-ghost"       onclick="cancelClear()">Cancel</button>
+            <button class="btn-destructive" onclick="confirmClear()">Clear ratings</button>
         </div>
     </div>
 </div>
 
-<!-- ── Jump toast ────────────────────────────────────────── -->
-<div class="jump-toast" id="jumpToast"></div>
+<!-- ── Toast ────────────────────────────────────────────────── -->
+<div class="toast" id="jumpToast"></div>
 
-<!-- ── Main app ──────────────────────────────────────────── -->
-<div class="container">
-    <header>
-        <h1>QA Image Review</h1>
-        <div class="user-badge" id="userBadge" style="display:none;" onclick="changeUser()" title="Click to switch rater">
-            🧑‍🔬 Reviewing as <span id="userBadgeName"></span> &nbsp;·&nbsp; switch
+<!-- ── App ──────────────────────────────────────────────────── -->
+<div class="app">
+
+    <!-- Top bar -->
+    <div class="topbar">
+        <div class="brand">
+            <div class="brand-icon">QA</div>
+            <div class="brand-name">NeuroQA</div>
+        </div>
+        <div class="user-badge" id="userBadge" onclick="changeUser()" title="Switch reviewer">
+            <div class="user-avatar">◎</div>
+            <span class="uname"   id="userBadgeName"></span>
+            <span class="switch">· switch</span>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section">
+        <div class="progress-meta">
+            <div class="stats-chips">
+                <div class="chip">
+                    <div class="chip-dot chip-dot-total"></div>
+                    <span class="chip-val" id="total">0</span>
+                    <span class="chip-lbl">total</span>
+                </div>
+                <div class="chip">
+                    <div class="chip-dot chip-dot-good"></div>
+                    <span class="chip-val" id="good">0</span>
+                    <span class="chip-lbl">good</span>
+                </div>
+                <div class="chip">
+                    <div class="chip-dot chip-dot-bad"></div>
+                    <span class="chip-val" id="bad">0</span>
+                    <span class="chip-lbl">bad</span>
+                </div>
+                <div class="chip">
+                    <div class="chip-dot chip-dot-remain"></div>
+                    <span class="chip-val" id="remaining">0</span>
+                    <span class="chip-lbl">left</span>
+                </div>
+            </div>
+            <div class="progress-label-right">
+                <strong id="progressLabel">0 / 0</strong> reviewed
+            </div>
         </div>
 
-        <!-- Interactive progress bar -->
         <div class="progress-wrapper" id="progressWrapper"
              onclick="onProgressClick(event)"
              onmousemove="onProgressHover(event)"
              onmouseleave="onProgressLeave()">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress"></div>
-            </div>
-            <!-- colour ticks per reviewed image -->
-            <div class="progress-ticks" id="progressTicks"></div>
-            <!-- hover cursor line -->
-            <div class="progress-cursor"   id="progressCursor"></div>
-            <!-- current-position diamond -->
+            <div class="progress-fill"    id="progress"></div>
+            <div class="progress-ticks"   id="progressTicks"></div>
+            <div class="progress-cursor"  id="progressCursor"></div>
             <div class="progress-position" id="progressPosition" style="left:0%"></div>
-            <!-- tooltip -->
-            <div class="progress-tooltip" id="progressTooltip">Image 0</div>
-        </div>
-        <div class="progress-label" id="progressLabel">0 / 0</div>
-    </header>
-
-    <div class="stats">
-        <div class="stat">
-            <div class="stat-value" id="total">0</div>
-            <div class="stat-label">Total</div>
-        </div>
-        <div class="stat stat-good">
-            <div class="stat-value" id="good">0</div>
-            <div class="stat-label">Good</div>
-        </div>
-        <div class="stat stat-bad">
-            <div class="stat-value" id="bad">0</div>
-            <div class="stat-label">Bad</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value" id="remaining">0</div>
-            <div class="stat-label">Remaining</div>
+            <div class="progress-tooltip" id="progressTooltip"></div>
         </div>
     </div>
 
-    <!-- card + flanking controls in one row -->
+    <!-- Review row -->
     <div class="review-row">
 
-        <!-- LEFT: Bad pill + Export -->
-        <div class="side-actions">
-            <button class="rate-pill pill-bad" onclick="rate('bad')" title="Bad  (← arrow)">
-                ✕
-                <span class="pill-label">Bad</span>
+        <!-- Left: Bad + Export -->
+        <div class="side-col">
+            <button class="action-btn action-bad" onclick="rate('bad')" title="">
+                <span class="action-icon">✕</span>
+                <span class="action-label">Bad</span>
             </button>
-            <button class="side-pill pill-export" onclick="exportCSV()" title="Export CSV">
-                ↓
-                <span class="pill-label">Export</span>
-            </button>
+            <button class="icon-btn icon-btn-indigo" onclick="exportCSV()" title="Export CSV">↓</button>
         </div>
 
-        <!-- CENTER: card -->
+        <!-- Card -->
         <div class="card-container" id="cardContainer">
-            <div class="empty-state" id="emptyState" style="display:none;">
-                <h2>No images found</h2>
-                <p>Check the IMAGE_PATTERN in app.py</p>
+            <!-- Empty state (no images found) -->
+            <div class="state-card" id="emptyState">
+                <div class="state-icon">◻</div>
+                <div class="state-title">No images found</div>
+                <div class="state-sub">Check the IMAGE_PATTERN in app.py</div>
             </div>
-            <div class="complete-state" id="completeState" style="display:none;">
-                <h2>All Done! 🎉</h2>
-                <p>You've reviewed all images.</p>
-                <button class="btn-export" onclick="exportCSV()">Download Results CSV</button>
+            <!-- Complete state -->
+            <div class="state-card" id="completeState">
+                <div class="state-icon">◈</div>
+                <div class="state-title">All done</div>
+                <div class="state-sub">You've reviewed every image in this session.</div>
+                <button class="btn-sm" onclick="exportCSV()">Download results CSV</button>
             </div>
         </div>
 
-        <!-- RIGHT: Good pill + Undo + Clear -->
-        <div class="side-actions">
-            <button class="rate-pill pill-good" onclick="rate('good')" title="Good  (→ arrow)">
-                ✓
-                <span class="pill-label">Good</span>
+        <!-- Right: Good + Undo + Clear -->
+        <div class="side-col">
+            <button class="action-btn action-good" onclick="rate('good')" title="">
+                <span class="action-icon">✓</span>
+                <span class="action-label">Good</span>
             </button>
-            <button class="btn-undo-micro" onclick="undo()" title="Undo (Z)">↩</button>
-            <button class="side-pill pill-clear" onclick="askClear()" title="Clear all ratings">
-                🗑
-                <span class="pill-label">Clear</span>
-            </button>
+            <button class="icon-btn icon-btn-amber" onclick="undo()"     title="Undo">↺</button>
+            <button class="icon-btn icon-btn-red"   onclick="askClear()" title="Clear ratings">⊗</button>
         </div>
 
     </div>
 
-    <div class="keyboard-hint">
-        <kbd>←</kbd> Bad &nbsp;&nbsp;
-        <kbd>→</kbd> Good &nbsp;&nbsp;
-        <kbd>Z</kbd> Undo &nbsp;&nbsp;
-        <kbd>A</kbd> Prev &nbsp;&nbsp;
-        <kbd>D</kbd> Next
+    <!-- Keyboard hint -->
+    <div class="kbd-hint">
+        <div class="kbd-item"><kbd>←</kbd> Bad</div>
+        <div class="kbd-item"><kbd>→</kbd> Good</div>
+        <div class="kbd-item"><kbd>Z</kbd> Undo</div>
+        <div class="kbd-item"><kbd>A</kbd> Prev</div>
+        <div class="kbd-item"><kbd>D</kbd> Next</div>
     </div>
-</div>
+
+</div><!-- /.app -->
 
 <script>
-    let images        = [];
-    let currentIndex  = 0;
-    let reviewedImages = new Set();   // paths already rated
-    let imageRatings   = {};          // path -> 'good'|'bad'  (for ticks)
+    let images         = [];
+    let currentIndex   = 0;
+    let reviewedImages = new Set();
+    let imageRatings   = {};
     let history        = [];
     let currentUsername = null;
 
-    // drag state
     let startX = 0, currentX = 0, isDragging = false;
 
     // ── Helpers ───────────────────────────────────────────────
@@ -582,24 +789,21 @@
     // ── Init & data loading ───────────────────────────────────
 
     async function init() {
-        // 1. Load image list
         const imgRes  = await fetch('/api/images');
         const imgData = await imgRes.json();
         images = imgData.images;
 
         if (images.length === 0) {
-            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'flex';
             return;
         }
 
-        // 2. Load saved progress (resume + per-image ratings)
         const revRes  = await fetch('/api/reviewed');
         const revData = await revRes.json();
         reviewedImages = new Set(revData.reviewed);
         imageRatings   = revData.ratings || {};
         currentIndex   = revData.resume_index;
 
-        // 3. Render UI
         updateStatsDisplay();
         renderProgressTicks();
         showCard();
@@ -633,7 +837,6 @@
         const pct = total > 0 ? (reviewed / total) * 100 : 0;
         document.getElementById('progress').style.width = pct + '%';
         document.getElementById('progressLabel').textContent = `${reviewed} / ${total}`;
-        // move position marker to current image
         if (total > 0) {
             const pos = (currentIndex / total) * 100;
             document.getElementById('progressPosition').style.left = pos + '%';
@@ -667,16 +870,13 @@
         const idx  = posToIndex(e);
         const rect = document.getElementById('progressWrapper').getBoundingClientRect();
         const x    = e.clientX - rect.left;
-
-        const cursor  = document.getElementById('progressCursor');
-        const tooltip = document.getElementById('progressTooltip');
-        cursor.style.left  = x + 'px';
-        tooltip.style.left = x + 'px';
-
-        const fname = images[idx].split('/').pop();
-        const subj  = images[idx].split('/').slice(-3, -2)[0] || '';
+        document.getElementById('progressCursor').style.left  = x + 'px';
+        document.getElementById('progressTooltip').style.left = x + 'px';
+        const fname  = images[idx].split('/').pop();
+        const subj   = images[idx].split('/').slice(-3, -2)[0] || '';
         const rating = imageRatings[images[idx]];
-        tooltip.textContent = `#${idx + 1}  ${subj}/${fname}` + (rating ? `  [${rating}]` : '');
+        document.getElementById('progressTooltip').textContent =
+            `#${idx + 1}  ${subj}/${fname}` + (rating ? `  [${rating}]` : '');
     }
 
     function onProgressLeave() {
@@ -686,17 +886,15 @@
 
     function onProgressClick(e) {
         if (!images.length) return;
-        const idx = posToIndex(e);
-        jumpToIndex(idx);
+        jumpToIndex(posToIndex(e));
     }
 
     function jumpToIndex(idx) {
         currentIndex = idx;
         document.getElementById('completeState').style.display = 'none';
-        // Remove existing card
         document.getElementById('cardContainer').querySelectorAll('.card').forEach(c => c.remove());
         const fname = images[idx].split('/').pop();
-        const subj  = (images[idx].split('/').slice(-3, -2)[0] || '');
+        const subj  = images[idx].split('/').slice(-3, -2)[0] || '';
         showToast(`Jumped to #${idx + 1}  ${subj}/${fname}`);
         updateStatsDisplay();
         showCard();
@@ -708,13 +906,12 @@
         const container = document.getElementById('cardContainer');
         container.querySelectorAll('.card').forEach(c => c.remove());
 
-        // From currentIndex find next unreviewed (forward or show complete)
         let idx = currentIndex;
         while (idx < images.length && reviewedImages.has(images[idx])) idx++;
         currentIndex = idx;
 
         if (currentIndex >= images.length) {
-            document.getElementById('completeState').style.display = 'block';
+            document.getElementById('completeState').style.display = 'flex';
             return;
         }
 
@@ -730,7 +927,7 @@
             <div class="swipe-indicator left">BAD</div>
             <div class="swipe-indicator right">GOOD</div>
             <img class="card-image" src="/api/image${imagePath}" alt="QA Image">
-            <div class="card-info">
+            <div class="card-footer">
                 <div class="card-path">${imagePath}</div>
             </div>
         `;
@@ -757,9 +954,9 @@
         if (!isDragging) return;
         currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
         const diff = currentX - startX;
-        const card = document.querySelector('.card');
+        const card = document.querySelector('#cardContainer .card');
         if (!card) return;
-        card.style.transform = `translateX(${diff}px) rotate(${diff * 0.05}deg)`;
+        card.style.transform = `translateX(${diff}px) rotate(${diff * 0.04}deg)`;
         const left  = card.querySelector('.swipe-indicator.left');
         const right = card.querySelector('.swipe-indicator.right');
         if (diff < -50) {
@@ -780,7 +977,7 @@
         if (!isDragging) return;
         isDragging = false;
         const diff = currentX - startX;
-        const card = document.querySelector('.card');
+        const card = document.querySelector('#cardContainer .card');
         if (Math.abs(diff) > 100) {
             animateSwipe(card, diff > 0 ? 1 : -1, () => rate(diff > 0 ? 'good' : 'bad'));
         } else if (card) {
@@ -792,9 +989,9 @@
 
     function animateSwipe(card, dir, cb) {
         if (!card) { cb(); return; }
-        card.style.transition = 'transform 0.3s ease';
-        card.style.transform  = `translateX(${dir * 1000}px) rotate(${dir * 30}deg)`;
-        setTimeout(() => { card.remove(); cb(); }, 300);
+        card.style.transition = 'transform 280ms ease';
+        card.style.transform  = `translateX(${dir * 110}vw) rotate(${dir * 24}deg)`;
+        setTimeout(() => { card.remove(); cb(); }, 280);
     }
 
     // ── Rate / Undo ───────────────────────────────────────────
@@ -839,16 +1036,13 @@
 
     // ── Clear ratings ─────────────────────────────────────────
 
-    function askClear() { document.getElementById('confirmOverlay').classList.add('show'); }
+    function askClear()    { document.getElementById('confirmOverlay').classList.add('show'); }
     function cancelClear() { document.getElementById('confirmOverlay').classList.remove('show'); }
 
     async function confirmClear() {
         cancelClear();
         await fetch('/api/clear', { method: 'POST' });
-        reviewedImages = new Set();
-        imageRatings   = {};
-        history        = [];
-        currentIndex   = 0;
+        reviewedImages = new Set(); imageRatings = {}; history = []; currentIndex = 0;
         document.getElementById('completeState').style.display = 'none';
         document.getElementById('cardContainer').querySelectorAll('.card').forEach(c => c.remove());
         renderProgressTicks();
@@ -864,7 +1058,7 @@
     document.addEventListener('keydown', e => {
         if (!document.getElementById('loginModal').classList.contains('hidden')) return;
         if (document.getElementById('confirmOverlay').classList.contains('show')) return;
-        if (e.key === 'ArrowLeft')               rate('bad');
+        if      (e.key === 'ArrowLeft')          rate('bad');
         else if (e.key === 'ArrowRight')         rate('good');
         else if (e.key === 'z' || e.key === 'Z') undo();
         else if (e.key === 'a' || e.key === 'A') scrollBy(-1);
